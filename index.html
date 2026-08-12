@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Program Meciuri — Sorare</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --bg: #0E0B1A;
+    --bg-alt: #150F26;
+    --card: #1B1533;
+    --line: #322A52;
+    --text: #F5F3FF;
+    --text-muted: #9C93B8;
+    --accent: #B24BF3;
+    --accent2: #2F86EB;
+    --yellow: #FFC300;
+    --danger: #FF3B5C;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background: radial-gradient(ellipse at top left, #2A1E52 0%, var(--bg) 55%);
+    background-color:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    padding:24px 16px 80px;
+  }
+  .wrap{ max-width:1100px; margin:0 auto; }
+
+  header{ margin-bottom:20px; }
+  .eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    letter-spacing:0.12em;
+    color:var(--accent);
+    font-size:12px;
+    text-transform:uppercase;
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:32px;
+    margin:0;
+    line-height:1.1;
+    background:linear-gradient(90deg,#fff,#D8CBFF);
+    -webkit-background-clip:text;
+    background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .subtitle{ color:var(--text-muted); font-size:14px; margin-top:6px; }
+
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin:18px 0 14px;
+    flex-wrap:wrap;
+  }
+  .leagues{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    padding:7px 13px;
+    border-radius:999px;
+    border:1.5px solid var(--line);
+    background:var(--card);
+    color:var(--text-muted);
+    cursor:pointer;
+    user-select:none;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    transition:transform .12s, border-color .12s, color .12s;
+  }
+  .chip .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .chip.active{ color:var(--text); border-color:transparent; }
+  .chip:hover{ transform:translateY(-1px); }
+  .chip:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+
+  .iconbtn{
+    background:var(--card);
+    border:1.5px solid var(--line);
+    color:var(--text-muted);
+    border-radius:8px;
+    padding:8px 12px;
+    font-size:12.5px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .iconbtn:hover{ color:var(--text); border-color:var(--accent); }
+
+  .status{ font-size:13px; color:var(--text-muted); margin:6px 2px 18px; min-height:16px; }
+  .status.error{ color:var(--danger); }
+
+  .settings{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+    margin-bottom:20px;
+    display:none;
+  }
+  .settings.open{ display:block; }
+  .settings label{ display:block; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); margin-bottom:8px; }
+  .key-row{ display:flex; gap:10px; }
+  input[type="password"], input[type="text"]{
+    flex:1; background:var(--bg-alt); border:1px solid var(--line); color:var(--text);
+    padding:10px 12px; border-radius:6px; font-size:14px; font-family:'Inter',sans-serif;
+  }
+  input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  button.primary{
+    font-family:'Inter',sans-serif; font-weight:700; font-size:14px; border:none; border-radius:6px;
+    padding:10px 18px; cursor:pointer; background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff;
+  }
+  button.primary:hover{ filter:brightness(1.08); }
+  button:disabled{ opacity:.5; cursor:not-allowed; }
+  .hint{ font-size:12px; color:var(--text-muted); margin-top:8px; line-height:1.5; }
+  .hint a{ color:var(--accent); }
+
+  .header-row{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .gearbtn{
+    flex-shrink:0;
+    background:var(--card);
+    border:1.5px solid var(--line);
+    color:var(--text-muted);
+    border-radius:8px;
+    width:38px; height:38px;
+    font-size:16px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .gearbtn:hover{ color:var(--text); border-color:var(--accent); }
+  .settings-close{
+    float:right; background:none; border:none; color:var(--text-muted);
+    font-size:13px; cursor:pointer; margin-top:-4px;
+  }
+  .settings-close:hover{ color:var(--text); }
+  .day-title{
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px;
+    margin-bottom:10px; text-transform:capitalize;
+  }
+  .timeline-scroll{ overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--bg-alt); }
+  .timeline-inner{ position:relative; }
+
+  .ruler{ display:flex; border-bottom:1px solid var(--line); position:sticky; top:0; }
+  .ruler .tick{
+    flex-shrink:0; font-size:10px; color:var(--text-muted); text-align:left;
+    padding:8px 0 6px 4px; border-left:1px solid rgba(255,255,255,0.05);
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .ruler .tick.hour{ color:var(--text); font-weight:700; border-left:1px solid var(--line); }
+
+  .lanes{ position:relative; }
+  .lane-bg{
+    position:absolute; top:0; bottom:0; border-left:1px solid rgba(255,255,255,0.04);
+  }
+
+  .match-bar{
+    position:absolute;
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow:0 2px 10px rgba(0,0,0,0.35);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:6px 10px;
+    font-size:12.5px;
+    line-height:1.35;
+  }
+  .match-bar .teams{ font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .match-bar .time{ font-size:10.5px; color:rgba(255,255,255,0.85); font-family:'Space Grotesk',sans-serif; }
+  .match-bar .tail{
+    position:absolute; top:0; right:0; bottom:0; background:var(--yellow);
+    opacity:0.9;
+  }
+
+  .empty{ text-align:center; color:var(--text-muted); padding:60px 20px; font-size:14px; }
+  footer{ text-align:center; color:var(--text-muted); font-size:12px; margin-top:40px; }
+
+  @media (prefers-reduced-motion: reduce){ *{ transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header-row">
+    <header>
+      <p class="eyebrow">Sorare &middot; Program &amp; suprapuneri</p>
+      <h1>Meciurile din următoarele 7 zile</h1>
+      <p class="subtitle">Timeline la 15 minute · meciurile care se suprapun apar pe rânduri separate · galben = marjă de prelungiri (estimativ)</p>
+    </header>
+    <button class="gearbtn" id="gearBtn" title="Setări (cheie API)">⚙</button>
+  </div>
+
+  <div class="settings" id="settingsPanel">
+    <button class="settings-close" id="closeSettingsBtn">✕ închide</button>
+    <label for="apiKey">Cheia ta API-Football (gratuită, de la dashboard.api-football.com)</label>
+    <div class="key-row">
+      <input type="password" id="apiKey" placeholder="lipește aici cheia ta" autocomplete="off">
+      <button class="primary" id="saveKeyBtn">Salvează &amp; încarcă</button>
+    </div>
+    <p class="hint">
+      Faci cont gratuit pe <a href="https://dashboard.api-football.com/register" target="_blank" rel="noopener">dashboard.api-football.com/register</a>,
+      copiezi cheia din dashboard și o lipești aici. O salvezi o singură dată pe acest dispozitiv/browser —
+      nu ți-o mai cere data viitoare. Poți reveni oricând aici din rotița din colț ca s-o schimbi.
+    </p>
+  </div>
+
+  <div class="toolbar">
+    <div class="leagues" id="leagueChips"></div>
+    <button class="iconbtn" id="refreshBtn" title="Consumă din cota API — folosește doar dacă e nevoie">↻ Forțează reîncărcare</button>
+  </div>
+
+  <p class="status" id="status"></p>
+  <div id="results"></div>
+
+  <footer>Date din API-Football · actualizate automat o dată pe zi, per persoană/dispozitiv</footer>
+</div>
+
+<script>
+/* ---------- CONFIG ---------- */
+const LEAGUES = [
+  { key:'PL',  name:'Premier League',      search:'Premier League',   country:'England',     calendarYear:false, color:'#FF3B5C' },
+  { key:'FL1', name:'Ligue 1',              search:'Ligue 1',          country:'France',      calendarYear:false, color:'#FF7A00' },
+  { key:'PD',  name:'LaLiga EA Sports',     search:'La Liga',          country:'Spain',       calendarYear:false, color:'#FFC300' },
+  { key:'BL1', name:'Bundesliga',           search:'Bundesliga',       country:'Germany',     calendarYear:false, color:'#B8E62D' },
+  { key:'PPL', name:'Liga Portugal',        search:'Primeira Liga',    country:'Portugal',    calendarYear:false, color:'#2FE6A7' },
+  { key:'DED', name:'Eredivisie',           search:'Eredivisie',       country:'Netherlands', calendarYear:false, color:'#00C2D1' },
+  { key:'JPL', name:'Jupiler Pro League',   search:'Pro League',       country:'Belgium',     calendarYear:false, color:'#2F86EB' },
+  { key:'SPL', name:'Scottish Premiership', search:'Premiership',      country:'Scotland',    calendarYear:false, color:'#6A5CFF' },
+  { key:'JL',  name:'J.League',             search:'J1 League',        country:'Japan',       calendarYear:true,  color:'#B24BF3' },
+  { key:'ELC', name:'Championship',         search:'Championship',     country:'England',     calendarYear:false, color:'#F13BE0' },
+  { key:'AUT', name:'Austrian Bundesliga',  search:'Bundesliga',       country:'Austria',     calendarYear:false, color:'#FF3B8D' },
+  { key:'HNL', name:'Croatian HNL',         search:'HNL',              country:'Croatia',     calendarYear:false, color:'#FF5F5F' },
+  { key:'BL2', name:'2. Bundesliga',        search:'2. Bundesliga',    country:'Germany',     calendarYear:false, color:'#38E5B0' },
+  { key:'MLS', name:'MLS',                  search:'MLS',              country:'USA',         calendarYear:true,  color:'#3DDC97' },
+  { key:'KL',  name:'K League',             search:'K League 1',       country:'South Korea', calendarYear:true,  color:'#FFAA33' },
+];
+
+const API_BASE = 'https://v3.football.api-sports.io';
+const MAIN_MIN = 90;   // durata meciului, minute
+const TAIL_MIN = 15;   // marja de "prelungiri", minute
+const SLOT_MIN = 15;   // rezoluția timeline-ului
+const SLOT_PX  = 58;   // lățime px per interval de 15 min
+const LANE_H   = 52;
+
+/* ---------- STATE ---------- */
+let activeKeys = new Set(LEAGUES.map(l => l.key));
+let allMatches = [];
+
+const $status = document.getElementById('status');
+const $results = document.getElementById('results');
+const $settings = document.getElementById('settingsPanel');
+const $chips = document.getElementById('leagueChips');
+
+/* ---------- STORAGE HELPERS (localStorage — funcționează pe orice site normal) ---------- */
+async function storeGet(key){
+  try{ const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : null; }
+  catch(e){ return null; }
+}
+async function storeSet(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ console.error('storage set failed', e); }
+}
+
+function todayStamp(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function isoDate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function seasonFor(league){
+  const now = new Date();
+  if(league.calendarYear) return now.getFullYear();
+  return now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1; // iulie+ => sezon nou
+}
+
+/* ---------- RENDER CHIPS ---------- */
+function renderChips(){
+  $chips.innerHTML = '';
+  LEAGUES.forEach(l=>{
+    const chip = document.createElement('div');
+    chip.className = 'chip active';
+    chip.tabIndex = 0;
+    chip.style.background = 'transparent';
+    chip.innerHTML = `<span class="dot" style="background:${l.color}"></span>${l.name}`;
+    chip.addEventListener('click', ()=>{
+      if(activeKeys.has(l.key)){ activeKeys.delete(l.key); chip.classList.remove('active'); chip.style.borderColor=''; }
+      else{ activeKeys.add(l.key); chip.classList.add('active'); chip.style.borderColor = l.color; }
+      renderTimeline();
+    });
+    chip.style.borderColor = l.color;
+    $chips.appendChild(chip);
+  });
+}
+
+/* ---------- LEAGUE ID RESOLUTION ---------- */
+async function resolveLeagueIds(apiKey){
+  let idMap = await storeGet('league-ids-v1');
+  if(idMap && Object.keys(idMap).length === LEAGUES.length) return idMap;
+  idMap = idMap || {};
+  for(const l of LEAGUES){
+    if(idMap[l.key]) continue;
+    try{
+      const url = `${API_BASE}/leagues?search=${encodeURIComponent(l.search)}`;
+      const res = await fetch(url, { headers:{ 'x-apisports-key': apiKey } });
+      const data = await res.json();
+      const match = (data.response || []).find(r =>
+        r.league.type === 'League' &&
+        r.country && r.country.name && r.country.name.toLowerCase().includes(l.country.toLowerCase().slice(0,4))
+      ) || (data.response || [])[0];
+      if(match) idMap[l.key] = match.league.id;
+    }catch(e){ console.error('resolve failed for', l.name, e); }
+  }
+  await storeSet('league-ids-v1', idMap);
+  return idMap;
+}
+
+/* ---------- FETCH FIXTURES ---------- */
+async function fetchAllFixtures(apiKey){
+  const idMap = await resolveLeagueIds(apiKey);
+  const today = new Date();
+  const future = new Date(); future.setDate(today.getDate()+7);
+  const from = isoDate(today), to = isoDate(future);
+
+  const matches = [];
+  for(const l of LEAGUES){
+    const id = idMap[l.key];
+    if(!id) continue;
+    try{
+      const url = `${API_BASE}/fixtures?league=${id}&season=${seasonFor(l)}&from=${from}&to=${to}`;
+      const res = await fetch(url, { headers:{ 'x-apisports-key': apiKey } });
+      if(!res.ok) continue;
+      const data = await res.json();
+      (data.response || []).forEach(f=>{
+        matches.push({
+          leagueKey: l.key,
+          leagueName: l.name,
+          color: l.color,
+          home: f.teams.home.name,
+          away: f.teams.away.name,
+          kickoff: new Date(f.fixture.date)
+        });
+      });
+    }catch(e){ console.error('fixtures fetch failed for', l.name, e); }
+  }
+  matches.sort((a,b)=> a.kickoff - b.kickoff);
+  return matches;
+}
+
+/* ---------- TIMELINE RENDER ---------- */
+function fmtTime(d){ return d.toLocaleTimeString('ro-RO', { hour:'2-digit', minute:'2-digit' }); }
+function fmtDay(d){ return d.toLocaleDateString('ro-RO', { weekday:'long', day:'numeric', month:'long' }); }
+function floor15(d){ const x = new Date(d); x.setMinutes(Math.floor(x.getMinutes()/15)*15, 0, 0); return x; }
+function ceil15(d){ const x = new Date(d); const m = x.getMinutes(); const r = m % 15; if(r!==0 || x.getSeconds()>0) x.setMinutes(m + (15-r), 0, 0); return x; }
+
+function assignLanes(dayMatches){
+  const lanes = []; // each lane: last end time
+  dayMatches.forEach(m=>{
+    const end = new Date(m.kickoff.getTime() + (MAIN_MIN+TAIL_MIN)*60000);
+    let placed = false;
+    for(let i=0;i<lanes.length;i++){
+      if(m.kickoff >= lanes[i]){ lanes[i] = end; m._lane = i; placed = true; break; }
+    }
+    if(!placed){ lanes.push(end); m._lane = lanes.length-1; }
+  });
+  return lanes.length;
+}
+
+function renderTimeline(){
+  const filtered = allMatches.filter(m => activeKeys.has(m.leagueKey));
+  $results.innerHTML = '';
+
+  if(filtered.length === 0){
+    $results.innerHTML = '<div class="empty">Nicio ligă selectată sau niciun meci în următoarele 7 zile pentru selecția curentă.</div>';
+    return;
+  }
+
+  // group by day
+  const groups = {};
+  filtered.forEach(m=>{
+    const key = isoDate(m.kickoff);
+    (groups[key] = groups[key] || []).push(m);
+  });
+
+  Object.keys(groups).sort().forEach(dayKey=>{
+    const dayMatches = groups[dayKey].sort((a,b)=>a.kickoff-b.kickoff);
+    const dayStart = floor15(dayMatches[0].kickoff);
+    const lastEnd = dayMatches.reduce((max,m)=>{
+      const e = new Date(m.kickoff.getTime() + (MAIN_MIN+TAIL_MIN)*60000);
+      return e > max ? e : max;
+    }, dayMatches[0].kickoff);
+    const dayEnd = ceil15(lastEnd);
+    const totalSlots = Math.round((dayEnd - dayStart) / 60000 / SLOT_MIN);
+    const laneCount = assignLanes(dayMatches);
+
+    const block = document.createElement('div');
+    block.className = 'day-block';
+
+    const title = document.createElement('div');
+    title.className = 'day-title';
+    title.textContent = fmtDay(dayMatches[0].kickoff);
+    block.appendChild(title);
+
+    const scroll = document.createElement('div');
+    scroll.className = 'timeline-scroll';
+    const inner = document.createElement('div');
+    inner.className = 'timeline-inner';
+    inner.style.width = (totalSlots*SLOT_PX) + 'px';
+
+    // ruler
+    const ruler = document.createElement('div');
+    ruler.className = 'ruler';
+    for(let i=0;i<totalSlots;i++){
+      const t = new Date(dayStart.getTime() + i*SLOT_MIN*60000);
+      const tick = document.createElement('div');
+      tick.className = 'tick' + (t.getMinutes()===0 ? ' hour' : '');
+      tick.style.width = SLOT_PX+'px';
+      tick.textContent = fmtTime(t);
+      ruler.appendChild(tick);
+    }
+    inner.appendChild(ruler);
+
+    // lanes
+    const lanesEl = document.createElement('div');
+    lanesEl.className = 'lanes';
+    lanesEl.style.height = (laneCount*LANE_H + 12) + 'px';
+
+    dayMatches.forEach(m=>{
+      const startOffsetMin = (m.kickoff - dayStart)/60000;
+      const left = (startOffsetMin/SLOT_MIN)*SLOT_PX;
+      const mainWidth = (MAIN_MIN/SLOT_MIN)*SLOT_PX;
+      const tailWidth = (TAIL_MIN/SLOT_MIN)*SLOT_PX;
+      const bar = document.createElement('div');
+      bar.className = 'match-bar';
+      bar.style.left = left+'px';
+      bar.style.width = (mainWidth+tailWidth)+'px';
+      bar.style.top = (m._lane*LANE_H + 6)+'px';
+      bar.style.height = (LANE_H-8)+'px';
+      bar.style.background = m.color;
+      bar.innerHTML = `
+        <div class="teams">${m.home} vs ${m.away}</div>
+        <div class="time">${fmtTime(m.kickoff)} · ${m.leagueName}</div>
+        <div class="tail" style="width:${tailWidth}px;"></div>
+      `;
+      lanesEl.appendChild(bar);
+    });
+
+    inner.appendChild(lanesEl);
+    scroll.appendChild(inner);
+    block.appendChild(scroll);
+    $results.appendChild(block);
+  });
+}
+
+/* ---------- MAIN FLOW ---------- */
+async function loadData(force){
+  $status.classList.remove('error');
+  const apiKey = await storeGet('api-key-v1');
+  if(!apiKey){
+    $settings.classList.add('open');
+    $status.textContent = 'Introdu cheia API mai sus ca să pornim (o singură dată).';
+    return;
+  }
+  $settings.classList.remove('open');
+
+  if(!force){
+    const cache = await storeGet('fixtures-cache-v1');
+    if(cache && cache.stamp === todayStamp()){
+      allMatches = cache.matches.map(m => ({...m, kickoff:new Date(m.kickoff)}));
+      $status.textContent = `Program încărcat (actualizat azi). ${allMatches.length} meciuri găsite.`;
+      renderTimeline();
+      return;
+    }
+  }
+
+  $status.textContent = 'Se aduce programul din API... (o singură dată azi, pentru toată lumea)';
+  document.getElementById('refreshBtn').disabled = true;
+  try{
+    const matches = await fetchAllFixtures(apiKey);
+    allMatches = matches;
+    await storeSet('fixtures-cache-v1', { stamp: todayStamp(), matches });
+    $status.textContent = `${matches.length} meciuri găsite pentru următoarele 7 zile.`;
+    renderTimeline();
+  }catch(e){
+    console.error(e);
+    $status.textContent = 'Nu am putut aduce datele. Verifică cheia API sau încearcă din nou mai târziu.';
+    $status.classList.add('error');
+  }finally{
+    document.getElementById('refreshBtn').disabled = false;
+  }
+}
+
+document.getElementById('gearBtn').addEventListener('click', ()=>{
+  $settings.classList.toggle('open');
+});
+document.getElementById('closeSettingsBtn').addEventListener('click', ()=>{
+  $settings.classList.remove('open');
+});
+document.getElementById('saveKeyBtn').addEventListener('click', async ()=>{
+  const val = document.getElementById('apiKey').value.trim();
+  if(!val) return;
+  await storeSet('api-key-v1', val);
+  loadData(false);
+});
+document.getElementById('refreshBtn').addEventListener('click', ()=> loadData(true));
+
+renderChips();
+loadData(false);
+</script>
+</body>
+</html>

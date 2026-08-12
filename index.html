@@ -209,20 +209,20 @@
       <h1>Meciurile din următoarele 7 zile</h1>
       <p class="subtitle">Timeline la 15 minute · meciurile care se suprapun apar pe rânduri separate · galben = marjă de prelungiri (estimativ)</p>
     </header>
-    <button class="gearbtn" id="gearBtn" title="Setări (cheie API)">⚙</button>
+    <button class="gearbtn" id="gearBtn" title="Setări (adresa proxy)">⚙</button>
   </div>
 
   <div class="settings" id="settingsPanel">
     <button class="settings-close" id="closeSettingsBtn">✕ închide</button>
-    <label for="apiKey">Cheia ta football-data.org (gratuită)</label>
+    <label for="apiKey">Adresa proxy-ului tău (de la Cloudflare Workers)</label>
     <div class="key-row">
-      <input type="password" id="apiKey" placeholder="lipește aici cheia ta" autocomplete="off">
+      <input type="text" id="apiKey" placeholder="ex: https://sorare-proxy.numele-tau.workers.dev" autocomplete="off">
       <button class="primary" id="saveKeyBtn">Salvează &amp; încarcă</button>
     </div>
     <p class="hint">
-      Faci cont gratuit pe <a href="https://www.football-data.org/client/register" target="_blank" rel="noopener">football-data.org/client/register</a>,
-      confirmi emailul, iar cheia (Auth Token) apare direct pe pagina contului tău — o lipești aici. O salvezi o singură dată pe acest dispozitiv/browser —
-      nu ți-o mai cere data viitoare. Poți reveni oricând aici din rotița din colț ca s-o schimbi.
+      Aici pui adresa Worker-ului tău de pe Cloudflare (nu cheia API — aceea stă ascunsă în cod, pe Worker, nu aici).
+      O salvezi o singură dată pe acest dispozitiv/browser — nu ți-o mai cere data viitoare. Poți reveni oricând
+      aici din rotița din colț ca s-o schimbi.
     </p>
   </div>
 
@@ -235,7 +235,7 @@
   <div class="debug" id="debugPanel"></div>
   <div id="results"></div>
 
-  <footer>Date din API-Football · actualizate automat o dată pe zi, per persoană/dispozitiv</footer>
+  <footer>Date din football-data.org · actualizate automat o dată pe zi, per persoană/dispozitiv</footer>
 </div>
 
 <script>
@@ -250,7 +250,6 @@ const LEAGUES = [
   { key:'ELC', name:'Championship',         code:'ELC', color:'#F13BE0' },
 ];
 
-const API_BASE = 'https://api.football-data.org/v4';
 const MAIN_MIN = 90;   // durata meciului, minute
 const TAIL_MIN = 15;   // marja de "prelungiri", minute
 const SLOT_MIN = 15;   // rezoluția timeline-ului
@@ -303,7 +302,7 @@ function renderChips(){
 /* ---------- FETCH FIXTURES ---------- */
 let debugLog = [];
 
-async function fetchAllFixtures(apiKey){
+async function fetchAllFixtures(proxyUrl){
   debugLog = [];
   const today = new Date();
   const future = new Date(); future.setDate(today.getDate()+7);
@@ -312,11 +311,12 @@ async function fetchAllFixtures(apiKey){
 
   const matches = [];
   try{
-    const url = `${API_BASE}/matches?competitions=${codes}&dateFrom=${from}&dateTo=${to}`;
-    const res = await fetch(url, { headers:{ 'X-Auth-Token': apiKey } });
+    const base = proxyUrl.replace(/\/$/, '');
+    const url = `${base}/matches?competitions=${codes}&dateFrom=${from}&dateTo=${to}`;
+    const res = await fetch(url);
     if(!res.ok){
       const body = await res.text();
-      debugLog.push(`Eroare HTTP ${res.status} de la football-data.org — ${body}`);
+      debugLog.push(`Eroare HTTP ${res.status} de la proxy — ${body}`);
       return matches;
     }
     const data = await res.json();
@@ -452,10 +452,10 @@ function renderTimeline(){
 /* ---------- MAIN FLOW ---------- */
 async function loadData(force){
   $status.classList.remove('error');
-  const apiKey = await storeGet('api-key-v1');
-  if(!apiKey){
+  const proxyUrl = await storeGet('proxy-url-v1');
+  if(!proxyUrl){
     $settings.classList.add('open');
-    $status.textContent = 'Introdu cheia API mai sus ca să pornim (o singură dată).';
+    $status.textContent = 'Introdu adresa proxy-ului mai sus ca să pornim (o singură dată).';
     return;
   }
   $settings.classList.remove('open');
@@ -470,10 +470,10 @@ async function loadData(force){
     }
   }
 
-  $status.textContent = 'Se aduce programul din API...';
+  $status.textContent = 'Se aduce programul...';
   document.getElementById('refreshBtn').disabled = true;
   try{
-    const matches = await fetchAllFixtures(apiKey);
+    const matches = await fetchAllFixtures(proxyUrl);
     allMatches = matches;
     await storeSet('fixtures-cache-v1', { stamp: todayStamp(), matches });
     $status.textContent = `${matches.length} meciuri găsite pentru următoarele 7 zile.`;
@@ -483,7 +483,7 @@ async function loadData(force){
     renderTimeline();
   }catch(e){
     console.error(e);
-    $status.textContent = 'Nu am putut aduce datele. Verifică cheia API sau încearcă din nou mai târziu.';
+    $status.textContent = 'Nu am putut aduce datele. Verifică adresa proxy-ului sau încearcă din nou mai târziu.';
     $status.classList.add('error');
   }finally{
     document.getElementById('refreshBtn').disabled = false;
@@ -499,7 +499,7 @@ document.getElementById('closeSettingsBtn').addEventListener('click', ()=>{
 document.getElementById('saveKeyBtn').addEventListener('click', async ()=>{
   const val = document.getElementById('apiKey').value.trim();
   if(!val) return;
-  await storeSet('api-key-v1', val);
+  await storeSet('proxy-url-v1', val);
   loadData(false);
 });
 document.getElementById('refreshBtn').addEventListener('click', ()=> loadData(true));
